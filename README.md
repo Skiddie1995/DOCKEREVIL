@@ -1,2 +1,4 @@
 # DOCKEREVIL
-Not finished yet... Based on the research of Pyperanger. Shout out to his awesome finding.
+I'm pretty sure it's working, let me know if the script doesn't work for you... Credits for the name of the script and the exploit concept goes to Pyperanger for his awesome research! https://github.com/pyperanger/dockerevil
+
+I'm not responsible for any bad/ilegal use of the code. This is for study and ethical work only.
