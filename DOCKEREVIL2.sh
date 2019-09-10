@@ -30,7 +30,6 @@ echo "/_______  /\____/ \___  >__|_ \\___  >__|    /_______  / \_/ |__|____/"
 echo "        \/            \/     \/    \/                \/               "
 
 ## Looking for user's parameters along with the command
-## Don't forget that this if needs a fi... Delete this comment when you include a fi for this if...
 if [ $1 == "-h" ]
 then
 	echo -e "\n Insert the desired host and port: \n"
