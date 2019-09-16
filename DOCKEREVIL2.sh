@@ -30,7 +30,7 @@ echo "/_______  /\____/ \___  >__|_ \\___  >__|    /_______  / \_/ |__|____/"
 echo "        \/            \/     \/    \/                \/               "
 
 ## Looking for user's parameters along with the command
-if [ $1 == "-h" ]
+if [ $1 == "-h" &> /dev/null ]
 then
 	echo -e "\n Insert the desired host and port: \n"
 	read HOST
